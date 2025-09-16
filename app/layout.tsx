@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   description: 'Sistema de feedback e avaliação de satisfação do cliente',
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: {
