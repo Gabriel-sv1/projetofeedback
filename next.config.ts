@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   // Otimizações de imagem
   images: {
     formats: ['image/webp', 'image/avif'],
+    qualities: [75, 85],
     minimumCacheTTL: 31536000,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
