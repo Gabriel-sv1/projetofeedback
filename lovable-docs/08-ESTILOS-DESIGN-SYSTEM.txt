@@ -1,0 +1,583 @@
+# DESIGN SYSTEM E ESTILOS COMPLETOS
+
+## 🎨 PALETA DE CORES
+
+### Cores Principais:
+```css
+:root {
+  /* Cores da marca Venturini&Co */
+  --primary: #1e293b;        /* Slate 800 - Azul escuro principal */
+  --primary-dark: #0f172a;   /* Slate 900 - Azul muito escuro */
+  --primary-light: #334155;  /* Slate 700 - Azul médio */
+  
+  /* Cores de feedback */
+  --success: #10b981;        /* Green 500 - Sucesso */
+  --warning: #f59e0b;        /* Amber 500 - Atenção */
+  --error: #ef4444;          /* Red 500 - Erro */
+  --info: #3b82f6;           /* Blue 500 - Informação */
+  
+  /* Cores neutras */
+  --background: #ffffff;     /* Branco */
+  --surface: #f8fafc;        /* Slate 50 - Fundo claro */
+  --surface-dark: #f1f5f9;   /* Slate 100 - Fundo médio */
+  --border: #e2e8f0;         /* Slate 200 - Bordas */
+  --text: #1e293b;           /* Slate 800 - Texto principal */
+  --text-muted: #64748b;     /* Slate 500 - Texto secundário */
+  
+  /* Gradientes */
+  --gradient-primary: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --gradient-background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+```
+
+### Cores NPS:
+```css
+/* Classificação NPS */
+.nps-promotor { color: #10b981; }    /* Verde - Notas 9-10 */
+.nps-neutro { color: #f59e0b; }      /* Amarelo - Notas 7-8 */
+.nps-detrator { color: #ef4444; }    /* Vermelho - Notas 0-6 */
+
+/* Backgrounds NPS */
+.bg-nps-promotor { background-color: #dcfce7; }   /* Verde claro */
+.bg-nps-neutro { background-color: #fef3c7; }     /* Amarelo claro */
+.bg-nps-detrator { background-color: #fee2e2; }   /* Vermelho claro */
+```
+
+## 🎯 TIPOGRAFIA
+
+### Hierarquia de Textos:
+```css
+/* Títulos */
+.text-display {
+  font-size: 3.75rem;    /* 60px */
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.text-h1 {
+  font-size: 3rem;       /* 48px */
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.text-h2 {
+  font-size: 2.25rem;    /* 36px */
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.text-h3 {
+  font-size: 1.875rem;   /* 30px */
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.text-h4 {
+  font-size: 1.5rem;     /* 24px */
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* Corpo do texto */
+.text-body-large {
+  font-size: 1.125rem;   /* 18px */
+  line-height: 1.6;
+}
+
+.text-body {
+  font-size: 1rem;       /* 16px */
+  line-height: 1.5;
+}
+
+.text-body-small {
+  font-size: 0.875rem;   /* 14px */
+  line-height: 1.4;
+}
+
+.text-caption {
+  font-size: 0.75rem;    /* 12px */
+  line-height: 1.3;
+  color: var(--text-muted);
+}
+```
+
+## 🔘 COMPONENTES DE BOTÕES
+
+### Variações de Botões:
+```css
+/* Botão Primário */
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Botão Secundário */
+.btn-secondary {
+  background: white;
+  color: var(--primary);
+  border: 1px solid var(--border);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+}
+
+/* Botão de Sucesso */
+.btn-success {
+  background: var(--gradient-success);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Botão NPS (0-10) */
+.btn-nps {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: white;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 1.125rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-nps:hover {
+  border-color: var(--primary);
+  transform: scale(1.05);
+}
+
+.btn-nps.selected {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+.btn-nps.nps-10.selected {
+  background: var(--gradient-success);
+  border-color: var(--success);
+  animation: celebrate 0.5s ease;
+}
+
+@keyframes celebrate {
+  0% { transform: scale(1.1); }
+  50% { transform: scale(1.3) rotate(10deg); }
+  100% { transform: scale(1.1); }
+}
+```
+
+## ⭐ COMPONENTE DE ESTRELAS
+
+### Sistema de Avaliação por Estrelas:
+```css
+.star-rating {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.star {
+  width: 1.5rem;
+  height: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--border);
+}
+
+.star:hover,
+.star.filled {
+  color: #fbbf24; /* Amber 400 - Dourado */
+  transform: scale(1.1);
+}
+
+.star:hover {
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5));
+}
+
+/* Animação de preenchimento */
+.star.filling {
+  animation: fillStar 0.3s ease;
+}
+
+@keyframes fillStar {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1.1); }
+}
+```
+
+## 📱 CARDS E CONTAINERS
+
+### Card Principal:
+```css
+.card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Card de Métrica */
+.metric-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.metric-card:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.1);
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.metric-label {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+```
+
+## 🎨 EFEITOS VISUAIS
+
+### Glassmorphism:
+```css
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glass-dark {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+```
+
+### Gradientes de Fundo:
+```css
+.bg-gradient-main {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.bg-gradient-header {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+.bg-gradient-success {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+}
+```
+
+## 📊 COMPONENTES DE FORMULÁRIO
+
+### Inputs Estilizados:
+```css
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+.form-input.error {
+  border-color: var(--error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Labels */
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.form-label.required::after {
+  content: " *";
+  color: var(--error);
+}
+
+/* Mensagens de erro */
+.form-error {
+  color: var(--error);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+```
+
+## 🎯 INDICADOR DE PROGRESSO
+
+### Progress Steps:
+```css
+.progress-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progress-circle {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.125rem;
+  transition: all 0.3s ease;
+  border: 2px solid var(--border);
+  background: white;
+  color: var(--text-muted);
+}
+
+.progress-circle.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+.progress-circle.completed {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+}
+
+.progress-line {
+  width: 4rem;
+  height: 2px;
+  background: var(--border);
+  position: relative;
+  top: -1.5rem;
+}
+
+.progress-line.completed {
+  background: var(--success);
+}
+```
+
+## 📱 RESPONSIVIDADE
+
+### Breakpoints:
+```css
+/* Mobile First */
+@media (min-width: 640px) {  /* sm */
+  .container { max-width: 640px; }
+}
+
+@media (min-width: 768px) {  /* md */
+  .container { max-width: 768px; }
+  .grid-cols-md-2 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) { /* lg */
+  .container { max-width: 1024px; }
+  .grid-cols-lg-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (min-width: 1280px) { /* xl */
+  .container { max-width: 1280px; }
+}
+```
+
+### Utilitários Mobile:
+```css
+.mobile-only {
+  display: block;
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none;
+  }
+  
+  .desktop-only {
+    display: block;
+  }
+}
+```
+
+## 🎭 ANIMAÇÕES
+
+### Transições Suaves:
+```css
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-bounce {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Animações de entrada */
+.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.5s ease;
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Loading states */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+```
+
+## 🎨 CONFIGURAÇÃO TAILWIND
+
+### tailwind.config.ts:
+```typescript
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+        },
+        success: {
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+        }
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-in': 'slideIn 0.3s ease-out',
+        'bounce-in': 'bounceIn 0.6s ease-out',
+        'celebrate': 'celebrate 3s ease-in-out',
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+      boxShadow: {
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.1)',
+        'glow': '0 0 20px rgba(16, 185, 129, 0.3)',
+      }
+    },
+  },
+  plugins: [],
+}
+
+export default config
+```

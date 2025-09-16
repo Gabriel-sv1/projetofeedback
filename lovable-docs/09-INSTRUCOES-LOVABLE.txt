@@ -1,4 +1,4 @@
-# INSTRUÇÕES PARA RECRIAR NO LOVABLE
+# GUIA COMPLETO PARA RECRIAR NO LOVABLE
 
 ## 🎯 RESUMO EXECUTIVO
 
@@ -12,23 +12,75 @@ Este é um **Sistema de Feedback Completo** desenvolvido em Next.js 15 com:
 - ✅ Animações e otimizações de performance
 - ✅ Design responsivo profissional
 
-## 🚀 PASSOS PARA RECRIAR NO LOVABLE
+## 🚀 PASSO-A-PASSO PARA LOVABLE
 
-### 1. CONFIGURAÇÃO INICIAL
+### ETAPA 1: CONFIGURAÇÃO INICIAL
+
+#### 1.1 Criar Projeto Next.js 15:
 ```bash
-# Criar projeto Next.js 15 com TypeScript
 npx create-next-app@latest sistema-feedback --typescript --tailwind --eslint --app
-
-# Instalar dependências principais
-npm install framer-motion lucide-react recharts pg @types/pg
-npm install @radix-ui/react-tabs @radix-ui/react-label @radix-ui/react-button
-npm install class-variance-authority clsx tailwind-merge
+cd sistema-feedback
 ```
 
-### 2. BANCO DE DADOS (PostgreSQL)
-```sql
--- Executar este script SQL completo:
+#### 1.2 Instalar Dependências:
+```bash
+# Dependências principais
+npm install framer-motion lucide-react recharts pg @types/pg
 
+# Componentes UI (shadcn/ui)
+npm install @radix-ui/react-tabs @radix-ui/react-label @radix-ui/react-button
+npm install @radix-ui/react-select @radix-ui/react-dialog
+npm install class-variance-authority clsx tailwind-merge
+
+# Utilitários
+npm install date-fns
+```
+
+#### 1.3 Configurar shadcn/ui:
+```bash
+npx shadcn-ui@latest init
+npx shadcn-ui@latest add button card input label tabs select dialog
+```
+
+### ETAPA 2: ESTRUTURA DE PASTAS
+
+Criar a seguinte estrutura:
+```
+app/
+├── admin/
+│   └── page.tsx              # Dashboard administrativo
+├── api/
+│   ├── export/
+│   │   └── route.ts          # API exportação CSV
+│   └── pesquisa/
+│       └── route.ts          # API principal (GET/POST)
+├── globals.css               # Estilos globais
+├── layout.tsx                # Layout principal
+└── page.tsx                  # Página da pesquisa
+
+components/
+├── optimized/
+│   ├── LazyImage.tsx         # Componente imagem lazy
+│   └── OptimizedForm.tsx     # Formulário otimizado
+└── ui/                       # Componentes shadcn/ui
+
+lib/
+├── db.ts                     # Configuração PostgreSQL
+└── utils.ts                  # Utilitários (cn, clsx)
+
+hooks/
+└── use-mobile.ts             # Hook detecção mobile
+```
+
+### ETAPA 3: BANCO DE DADOS POSTGRESQL
+
+#### 3.1 Criar Banco e Tabelas:
+```sql
+-- Criar banco
+CREATE DATABASE sistema_feedback;
+\c sistema_feedback;
+
+-- Tabela empresas
 CREATE TABLE empresas (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
@@ -36,64 +88,305 @@ CREATE TABLE empresas (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabela pesquisas
 CREATE TABLE pesquisas (
     id SERIAL PRIMARY KEY,
-    empresa_id INTEGER REFERENCES empresas(id),
-    nps INTEGER NOT NULL,
+    empresa_id INTEGER REFERENCES empresas(id) ON DELETE CASCADE,
+    nps INTEGER NOT NULL CHECK (nps >= 0 AND nps <= 10),
     quer_indicar BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabela avaliacoes
 CREATE TABLE avaliacoes (
     id SERIAL PRIMARY KEY,
-    pesquisa_id INTEGER REFERENCES pesquisas(id),
+    pesquisa_id INTEGER REFERENCES pesquisas(id) ON DELETE CASCADE,
     area VARCHAR(100) NOT NULL,
-    nota INTEGER NOT NULL,
+    nota INTEGER NOT NULL CHECK (nota >= 0 AND nota <= 5),
     nao_se_aplica BOOLEAN DEFAULT FALSE,
     feedback_positivo TEXT DEFAULT '',
     feedback_melhoria TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabela indicacoes
 CREATE TABLE indicacoes (
     id SERIAL PRIMARY KEY,
-    pesquisa_id INTEGER REFERENCES pesquisas(id),
+    pesquisa_id INTEGER REFERENCES pesquisas(id) ON DELETE CASCADE,
     nome VARCHAR(255) NOT NULL,
     empresa VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     telefone VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Índices para performance
+CREATE INDEX idx_pesquisas_empresa_id ON pesquisas(empresa_id);
+CREATE INDEX idx_pesquisas_created_at ON pesquisas(created_at);
+CREATE INDEX idx_avaliacoes_pesquisa_id ON avaliacoes(pesquisa_id);
+CREATE INDEX idx_empresas_created_at ON empresas(created_at);
 ```
 
-### 3. FUNCIONALIDADES PRINCIPAIS A IMPLEMENTAR
+#### 3.2 Configurar Conexão (lib/db.ts):
+```typescript
+import { Pool } from 'pg';
 
-#### A) Página Principal (app/page.tsx):
+const pool = new Pool({
+  user: process.env.PGUSER,
+  host: process.env.PGHOST || 'localhost',
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: parseInt(process.env.PGPORT || '5432'),
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+export { pool };
+```
+
+### ETAPA 4: PÁGINA PRINCIPAL (app/page.tsx)
+
+#### 4.1 Funcionalidades Principais:
 - **3 Etapas**: Dados empresa + NPS → Avaliação áreas → Indicações
-- **Indicador de Progresso**: Círculos 1-2-3 centralizados no topo
+- **Indicador de Progresso**: Círculos 1-2-3 centralizados
 - **NPS Selector**: Botões 0-10 com animação especial para nota 10
+- **6 Áreas**: Atendimento, Gestão de Tráfego, Design, Copywriting, Tecnologia, Vendas
 - **Feedback Condicional**: 
   - Notas 1-4: Campo obrigatório de melhorias (vermelho)
   - Nota 5: Campo obrigatório de pontos positivos (verde)
-- **6 Áreas**: Atendimento, Gestão de Tráfego, Design, Copywriting, Tecnologia, Vendas
 
-#### B) Dashboard Admin (app/admin/page.tsx):
-- **Login**: Senha "venturini2024"
-- **Filtros por Data**: Campos início/fim + botões rápidos (7, 30, 90 dias, este ano)
-- **4 Cards de Métricas**: Total, NPS Médio, Score NPS, Promotores
-- **4 Abas**:
-  1. **Visão Geral**: Gráfico pizza distribuição NPS + resumo
-  2. **Timeline**: Gráfico linha evolução temporal
-  3. **Avaliação por Área**: Gráfico barras + cards por área
-  4. **Pesquisas Recentes**: Tabela com badges coloridos
+#### 4.2 Interface FormData:
+```typescript
+interface FormData {
+  empresa: string;
+  responsavel: string;
+  nps: number | null;
+  querIndicar: boolean;
+  indicacoes: Array<{
+    nome: string;
+    empresa: string;
+    email: string;
+    telefone: string;
+  }>;
+  avaliacoes: {
+    [key: string]: {
+      nota: number;
+      naoSeAplica: boolean;
+      feedbackPositivo: string;
+      feedbackMelhoria: string;
+    };
+  };
+}
+```
 
-## ✅ RESULTADO ESPERADO
+### ETAPA 5: DASHBOARD ADMIN (app/admin/page.tsx)
 
-Um sistema completo e profissional de feedback com:
+#### 5.1 Sistema de Login:
+- Senha: "venturini2024"
+- Interface centralizada
+- Validação de acesso
+
+#### 5.2 Filtros por Data:
+- Campos início/fim personalizados
+- Botões rápidos: 7, 30, 90 dias, este ano
+- Validação de datas
+
+#### 5.3 Cards de Métricas:
+- Total de Pesquisas
+- NPS Médio
+- Score NPS (% Promotores - % Detratores)
+- Promotores (notas 9-10)
+
+#### 5.4 Sistema de Abas (4):
+1. **Visão Geral**: Gráfico pizza distribuição NPS + resumo
+2. **Timeline**: Gráfico linha evolução temporal
+3. **Avaliação por Área**: Gráfico barras + cards por área
+4. **Pesquisas Recentes**: Tabela com badges coloridos
+
+### ETAPA 6: APIs (app/api/pesquisa/route.ts)
+
+#### 6.1 POST - Salvar Pesquisa:
+```typescript
+export async function POST(request: Request) {
+  const data = await request.json();
+  const { empresa, responsavel, nps, querIndicar, avaliacoes, indicacoes } = data;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // 1. Inserir empresa
+    const empresaResult = await client.query(
+      'INSERT INTO empresas (nome, responsavel) VALUES ($1, $2) RETURNING id',
+      [empresa, responsavel]
+    );
+    const empresaId = empresaResult.rows[0].id;
+
+    // 2. Inserir pesquisa
+    const pesquisaResult = await client.query(
+      'INSERT INTO pesquisas (empresa_id, nps, quer_indicar) VALUES ($1, $2, $3) RETURNING id',
+      [empresaId, nps, querIndicar]
+    );
+    const pesquisaId = pesquisaResult.rows[0].id;
+
+    // 3. Inserir avaliações
+    for (const [area, avaliacao] of Object.entries(avaliacoes)) {
+      await client.query(
+        `INSERT INTO avaliacoes (pesquisa_id, area, nota, nao_se_aplica, 
+         feedback_positivo, feedback_melhoria) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [pesquisaId, area, avaliacao.nota, avaliacao.naoSeAplica, 
+         avaliacao.feedbackPositivo, avaliacao.feedbackMelhoria]
+      );
+    }
+
+    // 4. Inserir indicações
+    for (const indicacao of indicacoes) {
+      await client.query(
+        `INSERT INTO indicacoes (pesquisa_id, nome, empresa, email, telefone) 
+         VALUES ($1, $2, $3, $4, $5)`,
+        [pesquisaId, indicacao.nome, indicacao.empresa, 
+         indicacao.email, indicacao.telefone]
+      );
+    }
+
+    await client.query('COMMIT');
+    return Response.json({ success: true });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    return Response.json({ error: 'Erro ao salvar' }, { status: 500 });
+  } finally {
+    client.release();
+  }
+}
+```
+
+#### 6.2 GET - Dados Dashboard:
+Retorna stats, pesquisas, areas e timeline com suporte a filtros por data.
+
+### ETAPA 7: ESTILOS E DESIGN
+
+#### 7.1 Configurar Tailwind (tailwind.config.ts):
+```typescript
+export default {
+  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          800: '#1e293b',
+          900: '#0f172a',
+        },
+        success: '#10b981',
+        warning: '#f59e0b',
+        error: '#ef4444',
+      },
+      animation: {
+        'celebrate': 'celebrate 3s ease-in-out',
+      }
+    },
+  },
+}
+```
+
+#### 7.2 Estilos Globais (app/globals.css):
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes celebrate {
+  0% { transform: scale(1.1); }
+  25% { transform: scale(1.3) rotate(10deg); }
+  50% { transform: scale(1.2) rotate(-5deg); }
+  75% { transform: scale(1.25) rotate(5deg); }
+  100% { transform: scale(1.1); }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+```
+
+### ETAPA 8: OTIMIZAÇÕES DE PERFORMANCE
+
+#### 8.1 Lazy Loading:
+```typescript
+import dynamic from 'next/dynamic';
+
+const HeavyChart = dynamic(() => import('./HeavyChart'), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded" />,
+  ssr: false
+});
+```
+
+#### 8.2 Memoização:
+```typescript
+const MemoizedComponent = React.memo(({ data }) => {
+  const processedData = useMemo(() => {
+    return data.map(item => ({ ...item, processed: true }));
+  }, [data]);
+
+  return <div>{/* render */}</div>;
+});
+```
+
+### ETAPA 9: DEPLOY
+
+#### 9.1 Variáveis de Ambiente (.env.local):
+```env
+PGUSER=seu_usuario
+PGPASSWORD=sua_senha
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=sistema_feedback
+```
+
+#### 9.2 Vercel Deploy:
+```bash
+npm i -g vercel
+vercel login
+vercel --prod
+```
+
+## ✅ CHECKLIST FINAL
+
+### Funcionalidades Obrigatórias:
+- [ ] Pesquisa em 3 etapas funcionando
+- [ ] Indicador de progresso (1-2-3) centralizado
+- [ ] NPS selector (0-10) com animação para nota 10
+- [ ] 6 áreas de avaliação com estrelas
+- [ ] Feedback condicional (obrigatório para notas 1-4 e 5)
+- [ ] Dashboard com login (senha: venturini2024)
+- [ ] Filtros por data (7, 30, 90 dias, personalizado, este ano)
+- [ ] 4 abas: Visão Geral, Timeline, Avaliação por Área, Pesquisas Recentes
+- [ ] Gráficos Recharts (pizza, barras, linha)
+- [ ] Exportação CSV
+- [ ] Design responsivo
+- [ ] Animações Framer Motion
+
+### Performance:
+- [ ] Lazy loading implementado
+- [ ] Memoização aplicada
+- [ ] Bundle otimizado
+- [ ] Images otimizadas
+
+### Banco de Dados:
+- [ ] 4 tabelas criadas
+- [ ] Relacionamentos configurados
+- [ ] Índices de performance
+- [ ] Transações implementadas
+
+## 🎯 RESULTADO ESPERADO
+
+Um sistema profissional e completo de feedback com:
 - Interface intuitiva para coleta de pesquisas
-- Dashboard administrativo robusto com análises avançadas
-- Performance otimizada e design responsivo
-- Funcionalidades avançadas como filtros temporais e exportação
+- Dashboard robusto com análises avançadas
+- Performance otimizada e design moderno
+- Funcionalidades avançadas (filtros, exportação, animações)
 - Código limpo, documentado e escalável
 
 **Status**: Sistema 100% funcional e testado ✅

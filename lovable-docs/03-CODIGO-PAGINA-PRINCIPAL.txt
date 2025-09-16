@@ -1,0 +1,113 @@
+# CÓDIGO DA PÁGINA PRINCIPAL (app/page.tsx)
+
+## 📝 Funcionalidades Implementadas:
+
+### 1. Interface de Pesquisa em 3 Etapas:
+- Etapa 1: Dados da empresa e responsável + NPS
+- Etapa 2: Avaliação por áreas (6 áreas de serviço)
+- Etapa 3: Indicações opcionais
+
+### 2. Recursos Visuais:
+- Indicador de progresso centralizado (1-2-3)
+- Animação especial para NPS 10 (celebração 3 segundos)
+- Feedback condicional (melhorias para notas 1-4, positivos para nota 5)
+- Design responsivo com gradientes e backdrop blur
+- Animações suaves com Framer Motion
+
+### 3. Validações:
+- Campos obrigatórios por etapa
+- Feedback obrigatório baseado na nota
+- Validação antes de avançar etapas
+
+### 4. Performance:
+- Lazy loading de componentes pesados
+- Memoização com useCallback e useMemo
+- Dynamic imports para otimização
+
+## 🎯 Componentes Principais:
+
+### FormData Interface:
+```typescript
+interface FormData {
+  empresa: string;
+  responsavel: string;
+  nps: number | null;
+  querIndicar: boolean;
+  indicacoes: Array<{
+    nome: string;
+    empresa: string;
+    email: string;
+    telefone: string;
+  }>;
+  avaliacoes: {
+    [key: string]: {
+      nota: number;
+      naoSeAplica: boolean;
+      feedbackPositivo: string;
+      feedbackMelhoria: string;
+    };
+  };
+}
+```
+
+### Áreas de Avaliação:
+```javascript
+const areas = [
+  'Atendimento',
+  'Gestão de Tráfego', 
+  'Design',
+  'Copywriting',
+  'Tecnologia',
+  'Vendas'
+];
+```
+
+### Componente NPSAnimation:
+- Animação de celebração para NPS 10
+- Duração: 3 segundos
+- Efeitos: rotação, escala, gradiente de fundo
+
+### Componente ProgressIndicator:
+- Círculos numerados (1-2-3) centralizados
+- Checkmarks para etapas completadas
+- Linhas de conexão animadas
+- Título da etapa atual
+
+## 🔄 Fluxo de Dados:
+
+### 1. Coleta de Dados:
+- handleFormDataChange: Atualiza estado do formulário
+- Trigger de animação NPS quando nota = 10
+
+### 2. Navegação:
+- proximaEtapa: Avança para próxima etapa
+- etapaAnterior: Volta para etapa anterior
+
+### 3. Envio:
+- enviarPesquisa: POST para /api/pesquisa
+- Conversão de dados para formato da API
+- Tratamento de erros e loading states
+
+### 4. Sucesso:
+- SuccessScreen: Tela de confirmação
+- Opção de nova pesquisa
+
+## 🎨 Estilização:
+
+### Header:
+- Fundo slate-900 (preto)
+- Logo Venturini centralizado
+- Título "Pesquisa de Satisfação"
+- Gradiente de fundo na página
+
+### Cards:
+- Fundo branco com transparência (bg-white/80)
+- Backdrop blur para efeito glassmorphism
+- Sombras suaves (shadow-xl)
+- Bordas arredondadas
+
+### Animações:
+- Transições suaves entre etapas
+- Hover effects em botões
+- Loading states com spinners
+- Micro-interações em formulários

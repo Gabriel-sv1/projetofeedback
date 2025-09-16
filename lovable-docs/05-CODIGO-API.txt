@@ -1,0 +1,260 @@
+# CÓDIGO DAS APIs (app/api/pesquisa/route.ts)
+
+## 🔌 Endpoints Implementados:
+
+### 1. POST /api/pesquisa - Salvar Pesquisa
+Recebe dados da pesquisa e salva no PostgreSQL com transações.
+
+### 2. GET /api/pesquisa - Dashboard Data
+Retorna dados para o dashboard com suporte a filtros por data.
+
+## 📊 Estrutura da API POST:
+
+### Request Body:
+```typescript
+interface PesquisaRequest {
+  empresa: string;
+  responsavel: string;
+  nps: number;
+  querIndicar: boolean;
+  avaliacoes: {
+    [area: string]: {
+      nota: number;
+      naoSeAplica: boolean;
+      feedbackPositivo: string;
+      feedbackMelhoria: string;
+    };
+  };
+  indicacoes: Array<{
+    nome: string;
+    empresa: string;
+    email: string;
+    telefone: string;
+  }>;
+}
+```
+
+### Fluxo de Salvamento:
+1. **Validação de dados** obrigatórios
+2. **Transação PostgreSQL** iniciada
+3. **Insert empresa** na tabela `empresas`
+4. **Insert pesquisa** na tabela `pesquisas`
+5. **Insert avaliações** na tabela `avaliacoes` (loop por área)
+6. **Insert indicações** na tabela `indicacoes` (se existirem)
+7. **Commit da transação**
+8. **Rollback em caso de erro**
+
+### Código da Transação:
+```javascript
+const client = await pool.connect();
+try {
+  await client.query('BEGIN');
+  
+  // 1. Inserir empresa
+  const empresaResult = await client.query(
+    'INSERT INTO empresas (nome, responsavel) VALUES ($1, $2) RETURNING id',
+    [empresa, responsavel]
+  );
+  const empresaId = empresaResult.rows[0].id;
+
+  // 2. Inserir pesquisa
+  const pesquisaResult = await client.query(
+    'INSERT INTO pesquisas (empresa_id, nps, quer_indicar) VALUES ($1, $2, $3) RETURNING id',
+    [empresaId, nps, querIndicar]
+  );
+  const pesquisaId = pesquisaResult.rows[0].id;
+
+  // 3. Inserir avaliações
+  for (const [area, avaliacao] of Object.entries(avaliacoes)) {
+    await client.query(
+      `INSERT INTO avaliacoes (pesquisa_id, area, nota, nao_se_aplica, 
+       feedback_positivo, feedback_melhoria) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [pesquisaId, area, avaliacao.nota, avaliacao.naoSeAplica, 
+       avaliacao.feedbackPositivo, avaliacao.feedbackMelhoria]
+    );
+  }
+
+  // 4. Inserir indicações (se existirem)
+  for (const indicacao of indicacoes) {
+    await client.query(
+      `INSERT INTO indicacoes (pesquisa_id, nome, empresa, email, telefone) 
+       VALUES ($1, $2, $3, $4, $5)`,
+      [pesquisaId, indicacao.nome, indicacao.empresa, 
+       indicacao.email, indicacao.telefone]
+    );
+  }
+
+  await client.query('COMMIT');
+} catch (error) {
+  await client.query('ROLLBACK');
+  throw error;
+} finally {
+  client.release();
+}
+```
+
+## 📈 Estrutura da API GET:
+
+### Query Parameters:
+- `dataInicio` (opcional): Data início do filtro (YYYY-MM-DD)
+- `dataFim` (opcional): Data fim do filtro (YYYY-MM-DD)
+
+### Response Structure:
+```typescript
+interface DashboardResponse {
+  stats: {
+    total_pesquisas: number;
+    nps_medio: number;
+    promotores: number;
+    neutros: number;
+    detratores: number;
+    nps_score: number;
+  };
+  pesquisas: Array<{
+    id: number;
+    empresa: string;
+    responsavel: string;
+    nps: number;
+    data_criacao: string;
+  }>;
+  areas: Array<{
+    area: string;
+    media_nota: number;
+    total_avaliacoes: number;
+    feedbacks_melhoria: number;
+    feedbacks_positivos: number;
+  }>;
+  timeline: Array<{
+    data: string;
+    pesquisas: number;
+    nps_medio: number;
+  }>;
+}
+```
+
+### Queries SQL Implementadas:
+
+#### 1. Stats Gerais:
+```sql
+SELECT 
+  COUNT(*) as total_pesquisas,
+  ROUND(AVG(nps), 1) as nps_medio,
+  COUNT(CASE WHEN nps >= 9 THEN 1 END) as promotores,
+  COUNT(CASE WHEN nps >= 7 AND nps <= 8 THEN 1 END) as neutros,
+  COUNT(CASE WHEN nps <= 6 THEN 1 END) as detratores
+FROM pesquisas p
+JOIN empresas e ON p.empresa_id = e.id
+WHERE ($1::date IS NULL OR e.created_at::date >= $1::date)
+  AND ($2::date IS NULL OR e.created_at::date <= $2::date)
+```
+
+#### 2. Pesquisas com Filtro:
+```sql
+SELECT 
+  p.id, e.nome as empresa, e.responsavel, p.nps,
+  e.created_at as data_criacao
+FROM pesquisas p
+JOIN empresas e ON p.empresa_id = e.id
+WHERE ($1::date IS NULL OR e.created_at::date >= $1::date)
+  AND ($2::date IS NULL OR e.created_at::date <= $2::date)
+ORDER BY e.created_at DESC
+```
+
+#### 3. Dados por Área:
+```sql
+SELECT 
+  a.area,
+  ROUND(AVG(a.nota), 1) as media_nota,
+  COUNT(*) as total_avaliacoes,
+  COUNT(CASE WHEN LENGTH(a.feedback_melhoria) > 0 THEN 1 END) as feedbacks_melhoria,
+  COUNT(CASE WHEN LENGTH(a.feedback_positivo) > 0 THEN 1 END) as feedbacks_positivos
+FROM avaliacoes a
+JOIN pesquisas p ON a.pesquisa_id = p.id
+JOIN empresas e ON p.empresa_id = e.id
+WHERE a.nao_se_aplica = false
+  AND ($1::date IS NULL OR e.created_at::date >= $1::date)
+  AND ($2::date IS NULL OR e.created_at::date <= $2::date)
+GROUP BY a.area
+ORDER BY media_nota DESC
+```
+
+#### 4. Timeline:
+```sql
+SELECT 
+  e.created_at::date as data,
+  COUNT(*) as pesquisas,
+  ROUND(AVG(p.nps), 1) as nps_medio
+FROM pesquisas p
+JOIN empresas e ON p.empresa_id = e.id
+WHERE ($1::date IS NULL OR e.created_at::date >= $1::date)
+  AND ($2::date IS NULL OR e.created_at::date <= $2::date)
+GROUP BY e.created_at::date
+ORDER BY data ASC
+```
+
+## 🔧 Configuração do Banco (lib/db.ts):
+
+### Pool de Conexões:
+```javascript
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  user: process.env.PGUSER,
+  host: process.env.PGHOST || 'localhost',
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: parseInt(process.env.PGPORT || '5432'),
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+export { pool };
+```
+
+### Variáveis de Ambiente:
+```env
+PGUSER=seu_usuario
+PGPASSWORD=sua_senha
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=sistema_feedback
+```
+
+## 🛡️ Tratamento de Erros:
+
+### Validações:
+- Campos obrigatórios verificados
+- Tipos de dados validados
+- Transações com rollback automático
+
+### Responses de Erro:
+```javascript
+// 400 - Bad Request
+return NextResponse.json(
+  { error: 'Dados obrigatórios não fornecidos' }, 
+  { status: 400 }
+);
+
+// 500 - Internal Server Error
+return NextResponse.json(
+  { error: 'Erro interno do servidor' }, 
+  { status: 500 }
+);
+```
+
+## 📊 API de Exportação (app/api/export/route.ts):
+
+### GET /api/export - Exportar CSV
+- Mesmos filtros da API principal
+- Retorna arquivo CSV com headers apropriados
+- Formato: ID, Empresa, Responsável, NPS, Data
+
+### Headers CSV:
+```javascript
+const headers = [
+  'Content-Type: text/csv',
+  'Content-Disposition: attachment; filename="pesquisas.csv"'
+];
+```

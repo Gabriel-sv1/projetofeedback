@@ -1,0 +1,180 @@
+# CÓDIGO DO DASHBOARD ADMINISTRATIVO (app/admin/page.tsx)
+
+## 📊 Funcionalidades do Dashboard:
+
+### 1. Sistema de Login:
+- Senha protegida: "venturini2024"
+- Interface de login centralizada
+- Validação de acesso
+
+### 2. Filtros Avançados por Data:
+- Seleção de período personalizado (Data Início/Fim)
+- Filtros rápidos: 7, 30, 90 dias, este ano
+- Validação de datas (fim não pode ser anterior ao início)
+- Indicador visual quando filtro está ativo
+
+### 3. Cards de Métricas:
+- Total de Pesquisas
+- NPS Médio
+- Score NPS (cálculo: % Promotores - % Detratores)
+- Promotores (notas 9-10)
+
+### 4. Sistema de Abas (4 principais):
+
+#### Aba 1 - Visão Geral:
+- Gráfico de Pizza: Distribuição NPS (Promotores/Neutros/Detratores)
+- Resumo Geral: Estatísticas consolidadas
+- Cores: Verde (Promotores), Amarelo (Neutros), Vermelho (Detratores)
+
+#### Aba 2 - Timeline:
+- Gráfico de linha temporal
+- Evolução das pesquisas por dia
+- NPS médio por período
+- Visualização da tendência
+
+#### Aba 3 - Avaliação por Área:
+- Gráfico de barras por área de serviço
+- Cards individuais por área com:
+  - Média de notas (0-5)
+  - Total de avaliações
+  - Feedbacks positivos
+  - Feedbacks de melhoria
+
+#### Aba 4 - Pesquisas Recentes:
+- Tabela com todas as pesquisas
+- Colunas: ID, Empresa, Responsável, NPS, Categoria, Data
+- Badges coloridos por categoria (Promotor/Neutro/Detrator)
+- Ordenação por data (mais recentes primeiro)
+
+## 🔧 Interfaces TypeScript:
+
+### Pesquisa:
+```typescript
+interface Pesquisa {
+  id: number;
+  empresa: string;
+  responsavel: string;
+  nps: number;
+  data_criacao: string;
+}
+```
+
+### Stats:
+```typescript
+interface Stats {
+  total_pesquisas: number;
+  nps_medio: number;
+  promotores: number;
+  neutros: number;
+  detratores: number;
+  nps_score: number;
+}
+```
+
+### AreaData:
+```typescript
+interface AreaData {
+  area: string;
+  media_nota: number;
+  total_avaliacoes: number;
+  feedbacks_melhoria: number;
+  feedbacks_positivos: number;
+}
+```
+
+### TimelineData:
+```typescript
+interface TimelineData {
+  data: string;
+  pesquisas: number;
+  nps_medio: number;
+}
+```
+
+## 📈 Componentes de Gráficos (Recharts):
+
+### 1. PieChart - Distribuição NPS:
+```javascript
+const npsData = [
+  { name: 'Promotores', value: promotores, color: '#10b981' },
+  { name: 'Neutros', value: neutros, color: '#f59e0b' },
+  { name: 'Detratores', value: detratores, color: '#ef4444' }
+];
+```
+
+### 2. BarChart - Avaliação por Área:
+- Eixo X: Áreas de serviço
+- Eixo Y: Média de notas (0-5)
+- Cor: slate-900 (preto)
+
+### 3. LineChart - Timeline:
+- Barras: Quantidade de pesquisas por dia
+- Linha: NPS médio por dia
+- Dois eixos Y (esquerdo: pesquisas, direito: NPS)
+
+## 🎨 Componente DateFilter:
+
+### Funcionalidades:
+- Campos de data início/fim
+- Botões Filtrar/Limpar
+- Filtros rápidos com botões
+- Validação de datas
+- Loading states
+
+### Filtros Rápidos:
+```javascript
+const aplicarFiltroRapido = (dias: number) => {
+  const fim = new Date().toISOString().split('T')[0];
+  const inicio = new Date(Date.now() - dias * 24 * 60 * 60 * 1000)
+    .toISOString().split('T')[0];
+  onDataInicioChange(inicio);
+  onDataFimChange(fim);
+};
+```
+
+## 📊 Funções de Dados:
+
+### carregarDados:
+- Faz requisição GET para /api/pesquisa
+- Suporte a parâmetros de filtro (dataInicio, dataFim)
+- Atualiza todos os estados (stats, areas, pesquisas, timeline)
+
+### exportarCSV:
+- Gera arquivo CSV com dados filtrados
+- Headers: ID, Empresa, Responsável, NPS, Data
+- Nome do arquivo inclui período se filtrado
+
+### Funções de Classificação NPS:
+```javascript
+const getNPSColor = (nps: number) => {
+  if (nps >= 9) return 'text-green-600';  // Promotor
+  if (nps >= 7) return 'text-yellow-600'; // Neutro
+  return 'text-red-600';                  // Detrator
+};
+
+const getNPSBadge = (nps: number) => {
+  if (nps >= 9) return <Badge variant="success">Promotor</Badge>;
+  if (nps >= 7) return <Badge variant="warning">Neutro</Badge>;
+  return <Badge variant="destructive">Detrator</Badge>;
+};
+```
+
+## 🎯 Estados do Componente:
+
+### Estados Principais:
+- autenticado: boolean (controle de login)
+- pesquisas: Pesquisa[] (lista de pesquisas)
+- stats: Stats | null (métricas gerais)
+- areas: AreaData[] (dados por área)
+- timeline: TimelineData[] (dados temporais)
+- carregando: boolean (loading state)
+
+### Estados de Filtro:
+- dataInicio: string (data início do filtro)
+- dataFim: string (data fim do filtro)
+- filtroAtivo: boolean (indica se há filtro aplicado)
+
+## 🔒 Segurança:
+- Senha hardcoded: "venturini2024"
+- Validação no frontend
+- Proteção de rotas administrativas

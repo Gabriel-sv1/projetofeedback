@@ -1,0 +1,55 @@
+# SISTEMA DE FEEDBACK VENTURINI&CO - DOCUMENTAÇÃO COMPLETA PARA LOVABLE
+
+## 📋 VISÃO GERAL DO PROJETO
+
+### Descrição:
+Sistema completo de pesquisa de satisfação com dashboard administrativo avançado.
+Desenvolvido em Next.js 15 com TypeScript, shadcn/ui, Tailwind CSS e PostgreSQL.
+
+### Funcionalidades Principais:
+1. **Interface Pública de Pesquisa**:
+   - Formulário em 3 etapas com indicador de progresso centralizado
+   - Coleta de dados da empresa e responsável
+   - Avaliação NPS (0-10) com animação especial para nota 10
+   - Avaliação por áreas (Atendimento, Gestão de Tráfego, Design, Copywriting, Tecnologia, Vendas)
+   - Sistema de feedback condicional (melhorias para notas 1-4, positivos para nota 5)
+   - Coleta de indicações opcionais
+   - Design responsivo com animações suaves
+
+2. **Dashboard Administrativo**:
+   - Login protegido (senha: venturini2024)
+   - Filtros avançados por período (7, 30, 90 dias, personalizado, este ano)
+   - 4 abas principais: Visão Geral, Timeline, Avaliação por Área, Pesquisas Recentes
+   - Métricas em tempo real (Total, NPS Médio, Score NPS, Promotores/Neutros/Detratores)
+   - Gráficos interativos (Pizza para distribuição NPS, Barras para áreas, Timeline)
+   - Exportação CSV com dados filtrados
+   - Interface responsiva e profissional
+
+### Tecnologias Utilizadas:
+- **Frontend**: Next.js 15.5.2, React 18, TypeScript
+- **UI**: shadcn/ui, Tailwind CSS, Framer Motion
+- **Backend**: Next.js API Routes
+- **Banco**: PostgreSQL
+- **Gráficos**: Recharts
+- **Icons**: Lucide React
+- **Deploy**: Vercel (configurado)
+
+### Estrutura do Banco de Dados:
+- **empresas**: id, nome, responsavel, created_at
+- **pesquisas**: id, empresa_id, nps, quer_indicar, created_at
+- **avaliacoes**: id, pesquisa_id, area, nota, nao_se_aplica, feedback_positivo, feedback_melhoria, created_at
+- **indicacoes**: id, pesquisa_id, nome, empresa, email, telefone, created_at
+
+### Performance e Otimizações:
+- Lazy loading de componentes pesados
+- Memoização com React.memo, useCallback, useMemo
+- Otimizações Next.js (SWC, compressão, image optimization)
+- Code splitting e dynamic imports
+- Skeleton loaders e loading states
+
+### Status Atual:
+✅ Sistema 100% funcional localmente
+✅ Dashboard com filtros por data operacional
+✅ Código enviado para GitHub: https://github.com/Gabriel-sv1/projetofeedback.git
+✅ Configurado para deploy no Vercel
+✅ Documentação completa criada

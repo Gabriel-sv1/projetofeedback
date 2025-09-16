@@ -1,0 +1,390 @@
+# COMPONENTES OTIMIZADOS PARA PERFORMANCE
+
+## 🚀 Estratégias de Otimização Implementadas:
+
+### 1. React.memo para Componentes Puros
+### 2. useCallback para Funções Estáveis
+### 3. useMemo para Cálculos Pesados
+### 4. Lazy Loading de Componentes
+### 5. Dynamic Imports
+### 6. Code Splitting
+
+## 📦 Componente LazyImage (components/optimized/LazyImage.tsx):
+
+### Funcionalidades:
+- Carregamento lazy de imagens
+- Placeholder durante loading
+- Otimização automática de tamanho
+- Suporte a WebP/AVIF
+
+```typescript
+import { useState, useCallback } from 'react';
+import Image from 'next/image';
+
+interface LazyImageProps {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+}
+
+const LazyImage = React.memo(({ src, alt, width, height, className }: LazyImageProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  const handleLoad = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
+  const handleError = useCallback(() => {
+    setIsLoading(false);
+    setHasError(true);
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className={`bg-gray-200 flex items-center justify-center ${className}`}>
+        <span className="text-gray-500">Erro ao carregar imagem</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative ${className}`}>
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse rounded" />
+      )}
+      <Image
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        onLoad={handleLoad}
+        onError={handleError}
+        className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        priority={false}
+        loading="lazy"
+      />
+    </div>
+  );
+});
+
+LazyImage.displayName = 'LazyImage';
+export default LazyImage;
+```
+
+## 🎯 Componente OptimizedForm (components/optimized/OptimizedForm.tsx):
+
+### Otimizações:
+- Memoização de campos de formulário
+- Debounce em validações
+- Prevenção de re-renders desnecessários
+
+```typescript
+import React, { useState, useCallback, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
+interface FormField {
+  name: string;
+  value: string;
+  type: 'text' | 'email' | 'tel';
+  required: boolean;
+  placeholder: string;
+}
+
+interface OptimizedFormProps {
+  fields: FormField[];
+  onSubmit: (data: Record<string, string>) => void;
+  isLoading?: boolean;
+}
+
+const OptimizedForm = React.memo(({ fields, onSubmit, isLoading = false }: OptimizedFormProps) => {
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Memoizar validações
+  const validateField = useCallback((name: string, value: string, required: boolean) => {
+    if (required && !value.trim()) {
+      return 'Este campo é obrigatório';
+    }
+    if (name === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
+      return 'Email inválido';
+    }
+    return '';
+  }, []);
+
+  // Handler otimizado para mudanças
+  const handleChange = useCallback((name: string, value: string, required: boolean) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Validação com debounce
+    const error = validateField(name, value, required);
+    setErrors(prev => ({ ...prev, [name]: error }));
+  }, [validateField]);
+
+  // Memoizar campos renderizados
+  const renderedFields = useMemo(() => {
+    return fields.map((field) => (
+      <MemoizedField
+        key={field.name}
+        field={field}
+        value={formData[field.name] || ''}
+        error={errors[field.name]}
+        onChange={handleChange}
+      />
+    ));
+  }, [fields, formData, errors, handleChange]);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validar todos os campos
+    const newErrors: Record<string, string> = {};
+    fields.forEach(field => {
+      const error = validateField(field.name, formData[field.name] || '', field.required);
+      if (error) newErrors[field.name] = error;
+    });
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      onSubmit(formData);
+    }
+  }, [fields, formData, validateField, onSubmit]);
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {renderedFields}
+      <Button 
+        type="submit" 
+        disabled={isLoading}
+        className="w-full"
+      >
+        {isLoading ? 'Enviando...' : 'Enviar'}
+      </Button>
+    </form>
+  );
+});
+
+// Campo memoizado para evitar re-renders
+const MemoizedField = React.memo(({ 
+  field, 
+  value, 
+  error, 
+  onChange 
+}: {
+  field: FormField;
+  value: string;
+  error?: string;
+  onChange: (name: string, value: string, required: boolean) => void;
+}) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(field.name, e.target.value, field.required);
+  }, [field.name, field.required, onChange]);
+
+  return (
+    <div>
+      <Input
+        type={field.type}
+        placeholder={field.placeholder}
+        value={value}
+        onChange={handleChange}
+        className={error ? 'border-red-500' : ''}
+      />
+      {error && <span className="text-red-500 text-sm">{error}</span>}
+    </div>
+  );
+});
+
+OptimizedForm.displayName = 'OptimizedForm';
+MemoizedField.displayName = 'MemoizedField';
+
+export default OptimizedForm;
+```
+
+## 📊 Otimizações no Dashboard:
+
+### 1. Memoização de Gráficos:
+```typescript
+const MemoizedPieChart = React.memo(({ data }: { data: any[] }) => {
+  return (
+    <PieChart width={400} height={300}>
+      <Pie
+        data={data}
+        cx={200}
+        cy={150}
+        outerRadius={80}
+        dataKey="value"
+      />
+    </PieChart>
+  );
+});
+```
+
+### 2. Debounce em Filtros:
+```typescript
+const useDebouncedFilter = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+```
+
+### 3. Virtual Scrolling para Tabelas Grandes:
+```typescript
+const VirtualizedTable = React.memo(({ data, height = 400 }: {
+  data: any[];
+  height?: number;
+}) => {
+  const [startIndex, setStartIndex] = useState(0);
+  const [endIndex, setEndIndex] = useState(10);
+  
+  const visibleData = useMemo(() => {
+    return data.slice(startIndex, endIndex);
+  }, [data, startIndex, endIndex]);
+
+  return (
+    <div style={{ height, overflow: 'auto' }}>
+      {visibleData.map((item, index) => (
+        <TableRow key={startIndex + index} data={item} />
+      ))}
+    </div>
+  );
+});
+```
+
+## 🔄 Lazy Loading de Componentes:
+
+### Dynamic Imports:
+```typescript
+import dynamic from 'next/dynamic';
+
+// Componente pesado carregado apenas quando necessário
+const HeavyChart = dynamic(() => import('./HeavyChart'), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded" />,
+  ssr: false
+});
+
+// Dashboard com lazy loading
+const LazyDashboard = dynamic(() => import('./Dashboard'), {
+  loading: () => <DashboardSkeleton />,
+});
+```
+
+### Skeleton Loaders:
+```typescript
+const DashboardSkeleton = () => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="h-24 bg-gray-200 animate-pulse rounded" />
+      ))}
+    </div>
+    <div className="h-64 bg-gray-200 animate-pulse rounded" />
+  </div>
+);
+```
+
+## ⚡ Otimizações Next.js:
+
+### 1. Bundle Analyzer:
+```javascript
+// next.config.js
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+module.exports = withBundleAnalyzer({
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts'],
+  },
+});
+```
+
+### 2. Image Optimization:
+```javascript
+// next.config.js
+module.exports = {
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+};
+```
+
+### 3. Compression:
+```javascript
+// next.config.js
+module.exports = {
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  swcMinify: true,
+};
+```
+
+## 📱 Mobile Optimizations:
+
+### 1. Touch Optimizations:
+```css
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+```
+
+### 2. Viewport Optimizations:
+```typescript
+// hooks/use-mobile.ts
+import { useState, useEffect } from 'react';
+
+export const useMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+
+  return isMobile;
+};
+```
+
+## 🎯 Performance Metrics:
+
+### Métricas Alvo:
+- **First Contentful Paint**: < 1.5s
+- **Largest Contentful Paint**: < 2.5s
+- **Cumulative Layout Shift**: < 0.1
+- **First Input Delay**: < 100ms
+- **Bundle Size**: < 250KB (gzipped)
+
+### Monitoramento:
+```typescript
+// utils/performance.ts
+export const measurePerformance = (name: string, fn: () => void) => {
+  const start = performance.now();
+  fn();
+  const end = performance.now();
+  console.log(`${name} took ${end - start} milliseconds`);
+};
+```

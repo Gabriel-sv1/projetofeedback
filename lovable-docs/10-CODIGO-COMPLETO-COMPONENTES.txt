@@ -1,0 +1,1084 @@
+# CÓDIGO FONTE COMPLETO DOS COMPONENTES
+
+## 📄 PÁGINA PRINCIPAL (app/page.tsx)
+
+```typescript
+'use client';
+
+import { useState, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { Star, CheckCircle, ArrowRight, ArrowLeft, Send } from 'lucide-react';
+
+interface FormData {
+  empresa: string;
+  responsavel: string;
+  nps: number | null;
+  querIndicar: boolean;
+  indicacoes: Array<{
+    nome: string;
+    empresa: string;
+    email: string;
+    telefone: string;
+  }>;
+  avaliacoes: {
+    [key: string]: {
+      nota: number;
+      naoSeAplica: boolean;
+      feedbackPositivo: string;
+      feedbackMelhoria: string;
+    };
+  };
+}
+
+const areas = [
+  'Atendimento',
+  'Gestão de Tráfego',
+  'Design',
+  'Copywriting',
+  'Tecnologia',
+  'Vendas'
+];
+
+export default function PesquisaPage() {
+  const [etapaAtual, setEtapaAtual] = useState(1);
+  const [formData, setFormData] = useState<FormData>({
+    empresa: '',
+    responsavel: '',
+    nps: null,
+    querIndicar: false,
+    indicacoes: [],
+    avaliacoes: {}
+  });
+  const [enviando, setEnviando] = useState(false);
+  const [sucesso, setSucesso] = useState(false);
+  const [mostrarAnimacaoNPS, setMostrarAnimacaoNPS] = useState(false);
+
+  const handleFormDataChange = useCallback((campo: string, valor: any) => {
+    setFormData(prev => ({ ...prev, [campo]: valor }));
+    
+    // Trigger animação para NPS 10
+    if (campo === 'nps' && valor === 10) {
+      setMostrarAnimacaoNPS(true);
+      setTimeout(() => setMostrarAnimacaoNPS(false), 3000);
+    }
+  }, []);
+
+  const proximaEtapa = useCallback(() => {
+    if (etapaAtual < 3) {
+      setEtapaAtual(prev => prev + 1);
+    }
+  }, [etapaAtual]);
+
+  const etapaAnterior = useCallback(() => {
+    if (etapaAtual > 1) {
+      setEtapaAtual(prev => prev - 1);
+    }
+  }, [etapaAtual]);
+
+  const enviarPesquisa = useCallback(async () => {
+    setEnviando(true);
+    try {
+      const response = await fetch('/api/pesquisa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        setSucesso(true);
+      } else {
+        throw new Error('Erro ao enviar pesquisa');
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao enviar pesquisa. Tente novamente.');
+    } finally {
+      setEnviando(false);
+    }
+  }, [formData]);
+
+  const podeAvancar = useMemo(() => {
+    switch (etapaAtual) {
+      case 1:
+        return formData.empresa && formData.responsavel && formData.nps !== null;
+      case 2:
+        return Object.keys(formData.avaliacoes).length === areas.length;
+      case 3:
+        return true;
+      default:
+        return false;
+    }
+  }, [etapaAtual, formData]);
+
+  if (sucesso) {
+    return <SuccessScreen onNovaePesquisa={() => {
+      setFormData({
+        empresa: '',
+        responsavel: '',
+        nps: null,
+        querIndicar: false,
+        indicacoes: [],
+        avaliacoes: {}
+      });
+      setEtapaAtual(1);
+      setSucesso(false);
+    }} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200">
+      {/* Header */}
+      <header className="bg-slate-900 text-white py-6">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-2xl font-bold">Venturini&Co</h1>
+          <p className="text-slate-300 mt-2">Pesquisa de Satisfação</p>
+        </div>
+      </header>
+
+      {/* Indicador de Progresso */}
+      <div className="container mx-auto px-4 py-8">
+        <ProgressIndicator etapaAtual={etapaAtual} />
+      </div>
+
+      {/* Conteúdo Principal */}
+      <div className="container mx-auto px-4 pb-8">
+        <Card className="max-w-2xl mx-auto p-8 glass">
+          <AnimatePresence mode="wait">
+            {etapaAtual === 1 && (
+              <Etapa1
+                key="etapa1"
+                formData={formData}
+                onChange={handleFormDataChange}
+                mostrarAnimacao={mostrarAnimacaoNPS}
+              />
+            )}
+            {etapaAtual === 2 && (
+              <Etapa2
+                key="etapa2"
+                formData={formData}
+                onChange={handleFormDataChange}
+                areas={areas}
+              />
+            )}
+            {etapaAtual === 3 && (
+              <Etapa3
+                key="etapa3"
+                formData={formData}
+                onChange={handleFormDataChange}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Botões de Navegação */}
+          <div className="flex justify-between mt-8">
+            <Button
+              variant="outline"
+              onClick={etapaAnterior}
+              disabled={etapaAtual === 1}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Anterior
+            </Button>
+
+            {etapaAtual < 3 ? (
+              <Button
+                onClick={proximaEtapa}
+                disabled={!podeAvancar}
+                className="flex items-center gap-2"
+              >
+                Próximo
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={enviarPesquisa}
+                disabled={enviando}
+                className="flex items-center gap-2"
+              >
+                {enviando ? 'Enviando...' : 'Enviar'}
+                <Send className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Componente Indicador de Progresso
+const ProgressIndicator = ({ etapaAtual }: { etapaAtual: number }) => (
+  <div className="flex justify-center items-center gap-8">
+    {[1, 2, 3].map((numero) => (
+      <div key={numero} className="flex flex-col items-center gap-2">
+        <div className={`
+          w-12 h-12 rounded-full flex items-center justify-center font-semibold text-lg
+          transition-all duration-300 border-2
+          ${etapaAtual === numero 
+            ? 'bg-slate-900 text-white border-slate-900 scale-110' 
+            : etapaAtual > numero
+            ? 'bg-green-500 text-white border-green-500'
+            : 'bg-white text-slate-400 border-slate-300'
+          }
+        `}>
+          {etapaAtual > numero ? <CheckCircle className="w-6 h-6" /> : numero}
+        </div>
+        <span className={`text-sm font-medium ${
+          etapaAtual >= numero ? 'text-slate-900' : 'text-slate-400'
+        }`}>
+          {numero === 1 ? 'Dados & NPS' : numero === 2 ? 'Avaliação' : 'Indicações'}
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
+// Etapa 1: Dados da Empresa e NPS
+const Etapa1 = ({ formData, onChange, mostrarAnimacao }: any) => (
+  <motion.div
+    initial={{ opacity: 0, x: 50 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -50 }}
+    className="space-y-6"
+  >
+    <div className="text-center mb-6">
+      <h2 className="text-2xl font-bold text-slate-900">Dados da Empresa</h2>
+      <p className="text-slate-600 mt-2">Conte-nos sobre sua empresa e avalie nossa parceria</p>
+    </div>
+
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="empresa">Nome da Empresa *</Label>
+        <Input
+          id="empresa"
+          value={formData.empresa}
+          onChange={(e) => onChange('empresa', e.target.value)}
+          placeholder="Digite o nome da sua empresa"
+          className="mt-1"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="responsavel">Responsável *</Label>
+        <Input
+          id="responsavel"
+          value={formData.responsavel}
+          onChange={(e) => onChange('responsavel', e.target.value)}
+          placeholder="Digite o nome do responsável"
+          className="mt-1"
+        />
+      </div>
+
+      <div>
+        <Label>De 0 a 10, o quanto você recomendaria a Venturini&Co? *</Label>
+        <NPSSelector
+          valor={formData.nps}
+          onChange={(valor) => onChange('nps', valor)}
+          mostrarAnimacao={mostrarAnimacao}
+        />
+      </div>
+    </div>
+  </motion.div>
+);
+
+// Componente NPS Selector
+const NPSSelector = ({ valor, onChange, mostrarAnimacao }: any) => (
+  <div className="mt-4">
+    <div className="grid grid-cols-11 gap-2 mb-4">
+      {[...Array(11)].map((_, i) => (
+        <button
+          key={i}
+          onClick={() => onChange(i)}
+          className={`
+            w-12 h-12 rounded-full border-2 font-semibold text-lg
+            transition-all duration-200 hover:scale-105
+            ${valor === i
+              ? i === 10 && mostrarAnimacao
+                ? 'bg-gradient-to-r from-green-400 to-green-600 text-white border-green-500 animate-celebrate'
+                : 'bg-slate-900 text-white border-slate-900'
+              : 'bg-white text-slate-700 border-slate-300 hover:border-slate-900'
+            }
+          `}
+        >
+          {i}
+        </button>
+      ))}
+    </div>
+    <div className="flex justify-between text-sm text-slate-500">
+      <span>Não recomendaria</span>
+      <span>Recomendaria totalmente</span>
+    </div>
+  </div>
+);
+
+// Etapa 2: Avaliação por Áreas
+const Etapa2 = ({ formData, onChange, areas }: any) => {
+  const handleAvaliacaoChange = (area: string, campo: string, valor: any) => {
+    const avaliacaoAtual = formData.avaliacoes[area] || {
+      nota: 0,
+      naoSeAplica: false,
+      feedbackPositivo: '',
+      feedbackMelhoria: ''
+    };
+
+    onChange('avaliacoes', {
+      ...formData.avaliacoes,
+      [area]: { ...avaliacaoAtual, [campo]: valor }
+    });
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -50 }}
+      className="space-y-6"
+    >
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-slate-900">Avaliação por Área</h2>
+        <p className="text-slate-600 mt-2">Avalie cada área de serviço de 1 a 5 estrelas</p>
+      </div>
+
+      <div className="space-y-6">
+        {areas.map((area: string) => (
+          <AreaAvaliacao
+            key={area}
+            area={area}
+            avaliacao={formData.avaliacoes[area]}
+            onChange={(campo, valor) => handleAvaliacaoChange(area, campo, valor)}
+          />
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+// Componente Avaliação de Área
+const AreaAvaliacao = ({ area, avaliacao, onChange }: any) => {
+  const avaliacaoAtual = avaliacao || {
+    nota: 0,
+    naoSeAplica: false,
+    feedbackPositivo: '',
+    feedbackMelhoria: ''
+  };
+
+  const precisaFeedback = avaliacaoAtual.nota >= 1 && avaliacaoAtual.nota <= 4;
+  const precisaFeedbackPositivo = avaliacaoAtual.nota === 5;
+
+  return (
+    <Card className="p-4 border border-slate-200">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900">{area}</h3>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={avaliacaoAtual.naoSeAplica}
+              onChange={(e) => onChange('naoSeAplica', e.target.checked)}
+              className="rounded"
+            />
+            Não se aplica
+          </label>
+        </div>
+
+        {!avaliacaoAtual.naoSeAplica && (
+          <>
+            <StarRating
+              valor={avaliacaoAtual.nota}
+              onChange={(nota) => onChange('nota', nota)}
+            />
+
+            {precisaFeedback && (
+              <div>
+                <Label className="text-red-600">
+                  O que podemos melhorar nesta área? *
+                </Label>
+                <textarea
+                  value={avaliacaoAtual.feedbackMelhoria}
+                  onChange={(e) => onChange('feedbackMelhoria', e.target.value)}
+                  placeholder="Descreva o que podemos melhorar..."
+                  className="w-full mt-1 p-3 border border-red-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  rows={3}
+                />
+              </div>
+            )}
+
+            {precisaFeedbackPositivo && (
+              <div>
+                <Label className="text-green-600">
+                  O que você mais gostou nesta área? *
+                </Label>
+                <textarea
+                  value={avaliacaoAtual.feedbackPositivo}
+                  onChange={(e) => onChange('feedbackPositivo', e.target.value)}
+                  placeholder="Conte-nos o que você mais gostou..."
+                  className="w-full mt-1 p-3 border border-green-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  rows={3}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </Card>
+  );
+};
+
+// Componente Star Rating
+const StarRating = ({ valor, onChange }: any) => (
+  <div className="flex gap-1">
+    {[1, 2, 3, 4, 5].map((estrela) => (
+      <button
+        key={estrela}
+        onClick={() => onChange(estrela)}
+        className="transition-all duration-200 hover:scale-110"
+      >
+        <Star
+          className={`w-8 h-8 ${
+            estrela <= valor
+              ? 'text-yellow-400 fill-yellow-400'
+              : 'text-slate-300'
+          }`}
+        />
+      </button>
+    ))}
+  </div>
+);
+
+// Etapa 3: Indicações
+const Etapa3 = ({ formData, onChange }: any) => {
+  const adicionarIndicacao = () => {
+    onChange('indicacoes', [
+      ...formData.indicacoes,
+      { nome: '', empresa: '', email: '', telefone: '' }
+    ]);
+  };
+
+  const removerIndicacao = (index: number) => {
+    onChange('indicacoes', formData.indicacoes.filter((_: any, i: number) => i !== index));
+  };
+
+  const atualizarIndicacao = (index: number, campo: string, valor: string) => {
+    const novasIndicacoes = [...formData.indicacoes];
+    novasIndicacoes[index] = { ...novasIndicacoes[index], [campo]: valor };
+    onChange('indicacoes', novasIndicacoes);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -50 }}
+      className="space-y-6"
+    >
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-slate-900">Indicações</h2>
+        <p className="text-slate-600 mt-2">Gostaria de indicar alguém para a Venturini&Co?</p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="querIndicar"
+            checked={formData.querIndicar}
+            onChange={(e) => onChange('querIndicar', e.target.checked)}
+            className="w-5 h-5 rounded"
+          />
+          <Label htmlFor="querIndicar" className="text-lg">
+            Sim, gostaria de fazer indicações
+          </Label>
+        </div>
+
+        {formData.querIndicar && (
+          <div className="space-y-4">
+            {formData.indicacoes.map((indicacao: any, index: number) => (
+              <Card key={index} className="p-4 border border-slate-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Nome *</Label>
+                    <Input
+                      value={indicacao.nome}
+                      onChange={(e) => atualizarIndicacao(index, 'nome', e.target.value)}
+                      placeholder="Nome completo"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Empresa *</Label>
+                    <Input
+                      value={indicacao.empresa}
+                      onChange={(e) => atualizarIndicacao(index, 'empresa', e.target.value)}
+                      placeholder="Nome da empresa"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Email</Label>
+                    <Input
+                      type="email"
+                      value={indicacao.email}
+                      onChange={(e) => atualizarIndicacao(index, 'email', e.target.value)}
+                      placeholder="email@exemplo.com"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Telefone</Label>
+                    <Input
+                      value={indicacao.telefone}
+                      onChange={(e) => atualizarIndicacao(index, 'telefone', e.target.value)}
+                      placeholder="(11) 99999-9999"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removerIndicacao(index)}
+                  className="mt-3 text-red-600 hover:text-red-700"
+                >
+                  Remover Indicação
+                </Button>
+              </Card>
+            ))}
+
+            <Button
+              variant="outline"
+              onClick={adicionarIndicacao}
+              className="w-full"
+            >
+              + Adicionar Indicação
+            </Button>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+// Tela de Sucesso
+const SuccessScreen = ({ onNovaePesquisa }: any) => (
+  <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
+    <Card className="max-w-md mx-4 p-8 text-center">
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", duration: 0.5 }}
+      >
+        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">
+          Pesquisa Enviada!
+        </h2>
+        <p className="text-slate-600 mb-6">
+          Obrigado pelo seu feedback. Sua opinião é muito importante para nós!
+        </p>
+        <Button onClick={onNovaePesquisa} className="w-full">
+          Nova Pesquisa
+        </Button>
+      </motion.div>
+    </Card>
+  </div>
+);
+```
+
+## 🎯 DASHBOARD ADMINISTRATIVO (app/admin/page.tsx)
+
+```typescript
+'use client';
+
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { Users, TrendingUp, Star, Download, Filter, Calendar } from 'lucide-react';
+
+interface Pesquisa {
+  id: number;
+  empresa: string;
+  responsavel: string;
+  nps: number;
+  data_criacao: string;
+}
+
+interface Stats {
+  total_pesquisas: number;
+  nps_medio: number;
+  promotores: number;
+  neutros: number;
+  detratores: number;
+  nps_score: number;
+}
+
+interface AreaData {
+  area: string;
+  media_nota: number;
+  total_avaliacoes: number;
+  feedbacks_melhoria: number;
+  feedbacks_positivos: number;
+}
+
+interface TimelineData {
+  data: string;
+  pesquisas: number;
+  nps_medio: number;
+}
+
+export default function AdminDashboard() {
+  const [autenticado, setAutenticado] = useState(false);
+  const [senha, setSenha] = useState('');
+  const [pesquisas, setPesquisas] = useState<Pesquisa[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [areas, setAreas] = useState<AreaData[]>([]);
+  const [timeline, setTimeline] = useState<TimelineData[]>([]);
+  const [carregando, setCarregando] = useState(false);
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
+  const [filtroAtivo, setFiltroAtivo] = useState(false);
+
+  const login = useCallback(() => {
+    if (senha === 'venturini2024') {
+      setAutenticado(true);
+      carregarDados();
+    } else {
+      alert('Senha incorreta!');
+    }
+  }, [senha]);
+
+  const carregarDados = useCallback(async (inicio?: string, fim?: string) => {
+    setCarregando(true);
+    try {
+      const params = new URLSearchParams();
+      if (inicio) params.append('dataInicio', inicio);
+      if (fim) params.append('dataFim', fim);
+
+      const response = await fetch(`/api/pesquisa?${params}`);
+      const data = await response.json();
+
+      setPesquisas(data.pesquisas || []);
+      setStats(data.stats || null);
+      setAreas(data.areas || []);
+      setTimeline(data.timeline || []);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    } finally {
+      setCarregando(false);
+    }
+  }, []);
+
+  const aplicarFiltro = useCallback(() => {
+    if (dataInicio && dataFim) {
+      if (new Date(dataFim) < new Date(dataInicio)) {
+        alert('Data fim não pode ser anterior à data início');
+        return;
+      }
+      carregarDados(dataInicio, dataFim);
+      setFiltroAtivo(true);
+    }
+  }, [dataInicio, dataFim, carregarDados]);
+
+  const limparFiltro = useCallback(() => {
+    setDataInicio('');
+    setDataFim('');
+    setFiltroAtivo(false);
+    carregarDados();
+  }, [carregarDados]);
+
+  const aplicarFiltroRapido = useCallback((dias: number) => {
+    const fim = new Date().toISOString().split('T')[0];
+    const inicio = new Date(Date.now() - dias * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    setDataInicio(inicio);
+    setDataFim(fim);
+    carregarDados(inicio, fim);
+    setFiltroAtivo(true);
+  }, [carregarDados]);
+
+  const aplicarFiltroAnoAtual = useCallback(() => {
+    const agora = new Date();
+    const inicio = `${agora.getFullYear()}-01-01`;
+    const fim = agora.toISOString().split('T')[0];
+    setDataInicio(inicio);
+    setDataFim(fim);
+    carregarDados(inicio, fim);
+    setFiltroAtivo(true);
+  }, [carregarDados]);
+
+  const exportarCSV = useCallback(() => {
+    const headers = ['ID', 'Empresa', 'Responsável', 'NPS', 'Data'];
+    const csvContent = [
+      headers.join(','),
+      ...pesquisas.map(p => [
+        p.id,
+        `"${p.empresa}"`,
+        `"${p.responsavel}"`,
+        p.nps,
+        new Date(p.data_criacao).toLocaleDateString('pt-BR')
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `pesquisas${filtroAtivo ? '_filtrado' : ''}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [pesquisas, filtroAtivo]);
+
+  const npsData = useMemo(() => [
+    { name: 'Promotores', value: stats?.promotores || 0, color: '#10b981' },
+    { name: 'Neutros', value: stats?.neutros || 0, color: '#f59e0b' },
+    { name: 'Detratores', value: stats?.detratores || 0, color: '#ef4444' }
+  ], [stats]);
+
+  const getNPSColor = (nps: number) => {
+    if (nps >= 9) return 'text-green-600';
+    if (nps >= 7) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getNPSBadge = (nps: number) => {
+    if (nps >= 9) return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Promotor</span>;
+    if (nps >= 7) return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Neutro</span>;
+    return <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">Detrator</span>;
+  };
+
+  if (!autenticado) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 flex items-center justify-center">
+        <Card className="w-full max-w-md p-8">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-slate-900">Dashboard Administrativo</h1>
+            <p className="text-slate-600 mt-2">Sistema de Feedback - Venturini&Co</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="senha">Senha de Acesso</Label>
+              <Input
+                id="senha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && login()}
+                placeholder="Digite a senha"
+                className="mt-1"
+              />
+            </div>
+            <Button onClick={login} className="w-full">
+              Entrar
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200">
+      {/* Header */}
+      <header className="bg-slate-900 text-white py-6">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold">Dashboard Administrativo</h1>
+              <p className="text-slate-300 mt-1">Sistema de Feedback - Venturini&Co</p>
+            </div>
+            <Button onClick={exportarCSV} variant="outline" className="text-white border-white hover:bg-white hover:text-slate-900">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar CSV
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Filtros por Data */}
+        <Card className="p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-slate-600" />
+            <h2 className="text-lg font-semibold text-slate-900">Filtro por Período</h2>
+            {filtroAtivo && (
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                Filtro Ativo
+              </span>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <Label htmlFor="dataInicio">Data Início</Label>
+              <Input
+                id="dataInicio"
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="dataFim">Data Fim</Label>
+              <Input
+                id="dataFim"
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <Button onClick={aplicarFiltro} disabled={!dataInicio || !dataFim}>
+                <Filter className="w-4 h-4 mr-2" />
+                Filtrar
+              </Button>
+              <Button variant="outline" onClick={limparFiltro}>
+                Limpar
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm text-slate-600 mr-2">Filtros rápidos:</span>
+            <Button size="sm" variant="outline" onClick={() => aplicarFiltroRapido(7)}>
+              Últimos 7 dias
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => aplicarFiltroRapido(30)}>
+              Últimos 30 dias
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => aplicarFiltroRapido(90)}>
+              Últimos 90 dias
+            </Button>
+            <Button size="sm" variant="outline" onClick={aplicarFiltroAnoAtual}>
+              Este ano
+            </Button>
+          </div>
+        </Card>
+
+        {/* Cards de Métricas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Total de Pesquisas</p>
+                <p className="text-3xl font-bold text-slate-900">{stats?.total_pesquisas || 0}</p>
+              </div>
+              <Users className="w-8 h-8 text-slate-400" />
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">NPS Médio</p>
+                <p className="text-3xl font-bold text-slate-900">{stats?.nps_medio || '0.0'}</p>
+              </div>
+              <Star className="w-8 h-8 text-yellow-400" />
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Score NPS</p>
+                <p className={`text-3xl font-bold ${stats?.nps_score && stats.nps_score > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {stats?.nps_score || 0}
+                </p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-green-400" />
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Promotores</p>
+                <p className="text-3xl font-bold text-green-600">{stats?.promotores || 0}</p>
+              </div>
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-green-600 font-bold">😊</span>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Tabs do Dashboard */}
+        <Tabs defaultValue="visao-geral" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
+            <TabsTrigger value="areas">Avaliação por Área</TabsTrigger>
+            <TabsTrigger value="pesquisas">Pesquisas Recentes</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="visao-geral" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Distribuição NPS</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={npsData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {npsData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Resumo Geral</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Total de Respostas:</span>
+                    <span className="font-semibold">{stats?.total_pesquisas || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">NPS Médio:</span>
+                    <span className="font-semibold">{stats?.nps_medio || '0.0'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Score NPS:</span>
+                    <span className={`font-semibold ${stats?.nps_score && stats.nps_score > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {stats?.nps_score || 0}
+                    </span>
+                  </div>
+                  <div className="pt-4 border-t">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold text-green-600">{stats?.promotores || 0}</div>
+                        <div className="text-sm text-slate-600">Promotores</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-yellow-600">{stats?.neutros || 0}</div>
+                        <div className="text-sm text-slate-600">Neutros</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-red-600">{stats?.detratores || 0}</div>
+                        <div className="text-sm text-slate-600">Detratores</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="timeline">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Evolução Temporal</h3>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={timeline}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="data" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Bar yAxisId="left" dataKey="pesquisas" fill="#1e293b" name="Pesquisas" />
+                  <Line yAxisId="right" type="monotone" dataKey="nps_medio" stroke="#10b981" strokeWidth={2} name="NPS Médio" />
+                </LineChart>
+              </ResponsiveContainer>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="areas">
+            <div className="space-y-6">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Média por Área</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={areas}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="area" />
+                    <YAxis domain={[0, 5]} />
+                    <Tooltip />
+                    <Bar dataKey="media_nota" fill="#1e293b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {areas.map((area) => (
+                  <Card key={area.area} className="p-4">
+                    <h4 className="font-semibold text-slate-900 mb-2">{area.area}</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Média:</span>
+                        <span className="font-medium">{area.media_nota}/5</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Avaliações:</span>
+                        <span className="font-medium">{area.total_avaliacoes}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Feedbacks +:</span>
+                        <span className="font-medium text-green-600">{area.feedbacks_positivos}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Melhorias:</span>
+                        <span className="font-medium text-red-600">{area.feedbacks_melhoria}</span>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="pesquisas">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Pesquisas Recentes</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2">ID</th>
+                      <th className="text-left py-2">Empresa</th>
+                      <th className="text-left py-2">Responsável</th>
+                      <th className="text-left py-2">NPS</th>
+                      <th className="text-left py-2">Categoria</th>
+                      <th className="text-left py-2">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pesquisas.map((pesquisa) => (
+                      <tr key={pesquisa.id} className="border-b hover:bg-slate-50">
+                        <td className="py-2">{pesquisa.id}</td>
+                        <td className="py-2">{pesquisa.empresa}</td>
+                        <td className="py-2">{pesquisa.responsavel}</td>
+                        <td className={`py-2 font-semibold ${getNPSColor(pesquisa.nps)}`}>
+                          {pesquisa.nps}
+                        </td>
+                        <td className="py-2">{getNPSBadge(pesquisa.nps)}</td>
+                        <td className="py-2">
+                          {new Date(pesquisa.data_criacao).toLocaleDateString('pt-BR')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+```

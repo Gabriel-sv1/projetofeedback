@@ -1,0 +1,396 @@
+# BANCO DE DADOS E CONFIGURAÇÕES DE DEPLOY
+
+## 🗄️ ESTRUTURA COMPLETA DO BANCO POSTGRESQL
+
+### Script SQL Completo para Criação:
+
+```sql
+-- Criar banco de dados
+CREATE DATABASE sistema_feedback;
+
+-- Usar o banco criado
+\c sistema_feedback;
+
+-- Tabela de empresas
+CREATE TABLE empresas (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    responsavel VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de pesquisas
+CREATE TABLE pesquisas (
+    id SERIAL PRIMARY KEY,
+    empresa_id INTEGER REFERENCES empresas(id) ON DELETE CASCADE,
+    nps INTEGER NOT NULL CHECK (nps >= 0 AND nps <= 10),
+    quer_indicar BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de avaliações por área
+CREATE TABLE avaliacoes (
+    id SERIAL PRIMARY KEY,
+    pesquisa_id INTEGER REFERENCES pesquisas(id) ON DELETE CASCADE,
+    area VARCHAR(100) NOT NULL,
+    nota INTEGER NOT NULL CHECK (nota >= 0 AND nota <= 5),
+    nao_se_aplica BOOLEAN DEFAULT FALSE,
+    feedback_positivo TEXT DEFAULT '',
+    feedback_melhoria TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de indicações
+CREATE TABLE indicacoes (
+    id SERIAL PRIMARY KEY,
+    pesquisa_id INTEGER REFERENCES pesquisas(id) ON DELETE CASCADE,
+    nome VARCHAR(255) NOT NULL,
+    empresa VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    telefone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para performance
+CREATE INDEX idx_pesquisas_empresa_id ON pesquisas(empresa_id);
+CREATE INDEX idx_pesquisas_created_at ON pesquisas(created_at);
+CREATE INDEX idx_pesquisas_nps ON pesquisas(nps);
+CREATE INDEX idx_avaliacoes_pesquisa_id ON avaliacoes(pesquisa_id);
+CREATE INDEX idx_avaliacoes_area ON avaliacoes(area);
+CREATE INDEX idx_avaliacoes_nota ON avaliacoes(nota);
+CREATE INDEX idx_indicacoes_pesquisa_id ON indicacoes(pesquisa_id);
+CREATE INDEX idx_empresas_created_at ON empresas(created_at);
+
+-- Índices compostos para queries do dashboard
+CREATE INDEX idx_empresas_created_at_date ON empresas(DATE(created_at));
+CREATE INDEX idx_pesquisas_empresa_nps ON pesquisas(empresa_id, nps);
+CREATE INDEX idx_avaliacoes_area_nota ON avaliacoes(area, nota) WHERE nao_se_aplica = false;
+```
+
+### Dados de Exemplo para Teste:
+
+```sql
+-- Inserir empresas de exemplo
+INSERT INTO empresas (nome, responsavel) VALUES 
+('Empresa A', 'João Silva'),
+('Empresa B', 'Maria Santos'),
+('Empresa C', 'Pedro Costa');
+
+-- Inserir pesquisas de exemplo
+INSERT INTO pesquisas (empresa_id, nps, quer_indicar) VALUES 
+(1, 9, true),
+(2, 7, false),
+(3, 10, true);
+
+-- Inserir avaliações de exemplo
+INSERT INTO avaliacoes (pesquisa_id, area, nota, feedback_positivo) VALUES 
+(1, 'Atendimento', 5, 'Excelente atendimento!'),
+(1, 'Design', 4, 'Design muito bom'),
+(2, 'Atendimento', 3, ''),
+(3, 'Tecnologia', 5, 'Perfeito!');
+
+-- Inserir indicações de exemplo
+INSERT INTO indicacoes (pesquisa_id, nome, empresa, email, telefone) VALUES 
+(1, 'Ana Costa', 'Empresa D', 'ana@empresad.com', '11999999999'),
+(3, 'Carlos Lima', 'Empresa E', 'carlos@empresae.com', '11888888888');
+```
+
+## 🔧 CONFIGURAÇÃO DE CONEXÃO
+
+### Arquivo lib/db.ts:
+
+```typescript
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  user: process.env.PGUSER,
+  host: process.env.PGHOST || 'localhost',
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: parseInt(process.env.PGPORT || '5432'),
+  ssl: process.env.NODE_ENV === 'production' ? { 
+    rejectUnauthorized: false 
+  } : false,
+  max: 20, // máximo de conexões no pool
+  idleTimeoutMillis: 30000, // tempo limite para conexões inativas
+  connectionTimeoutMillis: 2000, // tempo limite para conectar
+});
+
+// Teste de conexão
+pool.on('connect', () => {
+  console.log('Conectado ao PostgreSQL');
+});
+
+pool.on('error', (err) => {
+  console.error('Erro no pool PostgreSQL:', err);
+});
+
+export { pool };
+```
+
+### Variáveis de Ambiente (.env.local):
+
+```env
+# Banco de Dados PostgreSQL
+PGUSER=seu_usuario
+PGPASSWORD=sua_senha
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=sistema_feedback
+
+# Para produção (Vercel)
+POSTGRES_URL=postgresql://usuario:senha@host:5432/database
+POSTGRES_PRISMA_URL=postgresql://usuario:senha@host:5432/database?pgbouncer=true&connect_timeout=15
+POSTGRES_URL_NON_POOLING=postgresql://usuario:senha@host:5432/database
+```
+
+## 🚀 CONFIGURAÇÕES DE DEPLOY
+
+### 1. Vercel (Recomendado):
+
+#### vercel.json:
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "PGUSER": "@pguser",
+    "PGPASSWORD": "@pgpassword",
+    "PGHOST": "@pghost",
+    "PGPORT": "@pgport",
+    "PGDATABASE": "@pgdatabase"
+  }
+}
+```
+
+#### Comandos Vercel:
+```bash
+# Instalar Vercel CLI
+npm i -g vercel
+
+# Login
+vercel login
+
+# Deploy
+vercel --prod
+
+# Configurar variáveis de ambiente
+vercel env add PGUSER
+vercel env add PGPASSWORD
+vercel env add PGHOST
+vercel env add PGPORT
+vercel env add PGDATABASE
+```
+
+### 2. Railway (Alternativa):
+
+#### railway.json:
+```json
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "npm start",
+    "healthcheckPath": "/api/health"
+  }
+}
+```
+
+### 3. Render (Alternativa):
+
+#### render.yaml:
+```yaml
+services:
+  - type: web
+    name: sistema-feedback
+    env: node
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PGUSER
+        fromDatabase:
+          name: feedback-db
+          property: user
+      - key: PGPASSWORD
+        fromDatabase:
+          name: feedback-db
+          property: password
+      - key: PGHOST
+        fromDatabase:
+          name: feedback-db
+          property: host
+      - key: PGPORT
+        fromDatabase:
+          name: feedback-db
+          property: port
+      - key: PGDATABASE
+        fromDatabase:
+          name: feedback-db
+          property: database
+
+databases:
+  - name: feedback-db
+    databaseName: sistema_feedback
+    user: feedback_user
+```
+
+## 🔒 CONFIGURAÇÕES DE SEGURANÇA
+
+### 1. Sanitização de Dados:
+```typescript
+// utils/sanitize.ts
+export const sanitizeInput = (input: string): string => {
+  return input
+    .trim()
+    .replace(/[<>]/g, '') // Remove < e >
+    .substring(0, 255); // Limita tamanho
+};
+
+export const sanitizeEmail = (email: string): string => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) ? email.toLowerCase() : '';
+};
+```
+
+### 2. Rate Limiting:
+```typescript
+// middleware/rateLimit.ts
+import { NextRequest } from 'next/server';
+
+const requests = new Map();
+
+export const rateLimit = (req: NextRequest) => {
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutos
+  const maxRequests = 100;
+
+  if (!requests.has(ip)) {
+    requests.set(ip, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+
+  const requestData = requests.get(ip);
+  
+  if (now > requestData.resetTime) {
+    requests.set(ip, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+
+  if (requestData.count >= maxRequests) {
+    return false;
+  }
+
+  requestData.count++;
+  return true;
+};
+```
+
+### 3. CORS Configuration:
+```typescript
+// next.config.js
+module.exports = {
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: 'https://yourdomain.com' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type' },
+        ],
+      },
+    ];
+  },
+};
+```
+
+## 📊 MONITORAMENTO E LOGS
+
+### 1. Health Check Endpoint:
+```typescript
+// app/api/health/route.ts
+import { pool } from '@/lib/db';
+
+export async function GET() {
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    
+    return Response.json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    });
+  } catch (error) {
+    return Response.json({ 
+      status: 'unhealthy', 
+      error: 'Database connection failed' 
+    }, { status: 500 });
+  }
+}
+```
+
+### 2. Logging:
+```typescript
+// utils/logger.ts
+export const logger = {
+  info: (message: string, data?: any) => {
+    console.log(`[INFO] ${new Date().toISOString()}: ${message}`, data);
+  },
+  error: (message: string, error?: any) => {
+    console.error(`[ERROR] ${new Date().toISOString()}: ${message}`, error);
+  },
+  warn: (message: string, data?: any) => {
+    console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, data);
+  }
+};
+```
+
+## 🔄 BACKUP E RECOVERY
+
+### Script de Backup:
+```bash
+#!/bin/bash
+# backup.sh
+
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/backups"
+DB_NAME="sistema_feedback"
+
+# Criar backup
+pg_dump -h localhost -U $PGUSER -d $DB_NAME > $BACKUP_DIR/backup_$DATE.sql
+
+# Manter apenas os últimos 7 backups
+find $BACKUP_DIR -name "backup_*.sql" -mtime +7 -delete
+
+echo "Backup criado: backup_$DATE.sql"
+```
+
+### Script de Restore:
+```bash
+#!/bin/bash
+# restore.sh
+
+if [ -z "$1" ]; then
+  echo "Uso: ./restore.sh backup_file.sql"
+  exit 1
+fi
+
+BACKUP_FILE=$1
+DB_NAME="sistema_feedback"
+
+# Restaurar backup
+psql -h localhost -U $PGUSER -d $DB_NAME < $BACKUP_FILE
+
+echo "Backup restaurado: $BACKUP_FILE"
+```
