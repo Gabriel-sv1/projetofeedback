@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: false,
   compiler: {},
+  experimental: {
+    turbopack: false,
+  },
 };
 
 export default nextConfig;
