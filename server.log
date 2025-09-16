@@ -1,0 +1,150 @@
+
+> sistema-feedback-v2@0.1.0 dev
+> next dev --turbopack
+
+ ⚠ Invalid next.config.js options detected: 
+ ⚠     Unrecognized key(s) in object: 'swcMinify'
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+   ▲ Next.js 15.5.2 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://169.254.0.21:3000
+   - Experiments (use with caution):
+     ✓ optimizeCss
+     · optimizePackageImports
+
+ ✓ Starting...
+ ✓ Ready in 1645ms
+ ○ Compiling / ...
+ ✓ Compiled / in 8.3s
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Image with src "/venturini-logo.png" is using quality "85" which is not configured in images.qualities. This config will be required starting in Next.js 16.
+Read more: https://nextjs.org/docs/messages/next-image-unconfigured-qualities
+ HEAD / 200 in 9797ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 261ms
+ ⚠ Cross origin request detected from sistema-feedback-v-2.lindy.site to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 591ms
+ ○ Compiling /api/pesquisa ...
+ ✓ Compiled /api/pesquisa in 698ms
+ POST /api/pesquisa 200 in 1306ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 243ms
+ ✓ Compiled /favicon.ico in 386ms
+ GET /favicon.ico?favicon.bf3c9292.ico 200 in 717ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 219ms
+ ✓ Compiled in 459ms
+ ✓ Compiled in 443ms
+ ✓ Compiled in 403ms
+ ✓ Compiled in 496ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 771ms
+ GET /favicon.ico?favicon.bf3c9292.ico 200 in 421ms
+ ⚠ Found a change in next.config.js. Restarting the server to apply the changes...
+   ▲ Next.js 15.5.2 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://169.254.0.21:3000
+   - Experiments (use with caution):
+     · turbo
+     ✓ optimizeCss
+     · optimizePackageImports
+
+ ✓ Starting...
+ ✓ Ready in 1682ms
+ ○ Compiling / ...
+ ✓ Compiled / in 8.3s
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 9387ms
+ ⚠ Cross origin request detected from sistema-feedback-v-2.lindy.site to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 563ms
+ GET /favicon.ico 200 in 955ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 254ms
+ GET /favicon.ico 200 in 326ms
+ ✓ Compiled in 509ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 807ms
+ GET /favicon.ico 200 in 334ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 5.7s
+ ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /admin 200 in 6275ms
+ ○ Compiling /api/pesquisa ...
+ ✓ Compiled /api/pesquisa in 716ms
+ GET /api/pesquisa 200 in 1249ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /admin 200 in 236ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /admin 200 in 230ms
+ GET /favicon.ico 200 in 322ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /admin 200 in 219ms
+ GET /favicon.ico 200 in 301ms
+ GET /api/pesquisa 200 in 402ms
+ ✓ Compiled in 7.3s
+ ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /admin 200 in 1501ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /admin 200 in 265ms
+ GET /favicon.ico 200 in 337ms
+ GET /favicon.ico?favicon.bf3c9292.ico 200 in 315ms
+ GET /favicon.ico 200 in 307ms
+ ✓ Compiled in 982ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /admin 200 in 959ms
+ GET /favicon.ico 200 in 375ms
+ GET /api/pesquisa 200 in 329ms
+ ✓ Compiled in 748ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /admin 200 in 792ms
+ GET /favicon.ico 200 in 287ms
+Erro ao buscar dados: error: database "sandbox" does not exist
+    at async GET (app/api/pesquisa/route.ts:82:20)
+  80 |     const dataFim = searchParams.get('dataFim');
+  81 |
+> 82 |     const client = await pool.connect();
+     |                    ^
+  83 |
+  84 |     try {
+  85 |       // Construir condições de filtro {
+  length: 92,
+  severity: 'FATAL',
+  code: '3D000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'postinit.c',
+  line: '888',
+  routine: 'InitPostgres'
+}
+ GET /api/pesquisa 500 in 756ms

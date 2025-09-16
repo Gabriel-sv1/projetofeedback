@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "name": "sistema-feedback-venturini",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "PGUSER": "@pguser",
+    "PGPASSWORD": "@pgpassword",
+    "PGHOST": "@pghost",
+    "PGPORT": "@pgport",
+    "PGDATABASE": "@pgdatabase"
+  },
+  "functions": {
+    "app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
