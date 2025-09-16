@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
 
   // Configurações de build
   poweredByHeader: false,
-  reactStrictMode: true,
+  reactStrictMode: false,
 };
 
 export default nextConfig;
