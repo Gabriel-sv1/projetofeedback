@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: false,
+  experimental: {
+    turbo: false
+  },
 };
 
 export default nextConfig;
