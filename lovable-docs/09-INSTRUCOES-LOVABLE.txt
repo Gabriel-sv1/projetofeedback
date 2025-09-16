@@ -1,0 +1,101 @@
+# INSTRUÇÕES PARA RECRIAR NO LOVABLE
+
+## 🎯 RESUMO EXECUTIVO
+
+Este é um **Sistema de Feedback Completo** desenvolvido em Next.js 15 com:
+- ✅ Interface pública de pesquisa em 3 etapas
+- ✅ Dashboard administrativo com filtros avançados por data
+- ✅ 4 abas no admin: Visão Geral, Timeline, Avaliação por Área, Pesquisas Recentes
+- ✅ Banco PostgreSQL com 4 tabelas relacionadas
+- ✅ Gráficos interativos (Recharts)
+- ✅ Sistema de feedback condicional
+- ✅ Animações e otimizações de performance
+- ✅ Design responsivo profissional
+
+## 🚀 PASSOS PARA RECRIAR NO LOVABLE
+
+### 1. CONFIGURAÇÃO INICIAL
+```bash
+# Criar projeto Next.js 15 com TypeScript
+npx create-next-app@latest sistema-feedback --typescript --tailwind --eslint --app
+
+# Instalar dependências principais
+npm install framer-motion lucide-react recharts pg @types/pg
+npm install @radix-ui/react-tabs @radix-ui/react-label @radix-ui/react-button
+npm install class-variance-authority clsx tailwind-merge
+```
+
+### 2. BANCO DE DADOS (PostgreSQL)
+```sql
+-- Executar este script SQL completo:
+
+CREATE TABLE empresas (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    responsavel VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE pesquisas (
+    id SERIAL PRIMARY KEY,
+    empresa_id INTEGER REFERENCES empresas(id),
+    nps INTEGER NOT NULL,
+    quer_indicar BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE avaliacoes (
+    id SERIAL PRIMARY KEY,
+    pesquisa_id INTEGER REFERENCES pesquisas(id),
+    area VARCHAR(100) NOT NULL,
+    nota INTEGER NOT NULL,
+    nao_se_aplica BOOLEAN DEFAULT FALSE,
+    feedback_positivo TEXT DEFAULT '',
+    feedback_melhoria TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE indicacoes (
+    id SERIAL PRIMARY KEY,
+    pesquisa_id INTEGER REFERENCES pesquisas(id),
+    nome VARCHAR(255) NOT NULL,
+    empresa VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    telefone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### 3. FUNCIONALIDADES PRINCIPAIS A IMPLEMENTAR
+
+#### A) Página Principal (app/page.tsx):
+- **3 Etapas**: Dados empresa + NPS → Avaliação áreas → Indicações
+- **Indicador de Progresso**: Círculos 1-2-3 centralizados no topo
+- **NPS Selector**: Botões 0-10 com animação especial para nota 10
+- **Feedback Condicional**: 
+  - Notas 1-4: Campo obrigatório de melhorias (vermelho)
+  - Nota 5: Campo obrigatório de pontos positivos (verde)
+- **6 Áreas**: Atendimento, Gestão de Tráfego, Design, Copywriting, Tecnologia, Vendas
+
+#### B) Dashboard Admin (app/admin/page.tsx):
+- **Login**: Senha "venturini2024"
+- **Filtros por Data**: Campos início/fim + botões rápidos (7, 30, 90 dias, este ano)
+- **4 Cards de Métricas**: Total, NPS Médio, Score NPS, Promotores
+- **4 Abas**:
+  1. **Visão Geral**: Gráfico pizza distribuição NPS + resumo
+  2. **Timeline**: Gráfico linha evolução temporal
+  3. **Avaliação por Área**: Gráfico barras + cards por área
+  4. **Pesquisas Recentes**: Tabela com badges coloridos
+
+## ✅ RESULTADO ESPERADO
+
+Um sistema completo e profissional de feedback com:
+- Interface intuitiva para coleta de pesquisas
+- Dashboard administrativo robusto com análises avançadas
+- Performance otimizada e design responsivo
+- Funcionalidades avançadas como filtros temporais e exportação
+- Código limpo, documentado e escalável
+
+**Status**: Sistema 100% funcional e testado ✅
+**GitHub**: https://github.com/Gabriel-sv1/projetofeedback.git
+**Tecnologias**: Next.js 15, TypeScript, PostgreSQL, Tailwind, Framer Motion, Recharts
